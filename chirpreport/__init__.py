@@ -1,7 +1,7 @@
-from flask import Flask, request, jsonify
+from flask import Flask
+
 app = Flask(__name__)
 from chirpreport.routes.Routes import *
-
 
 app.config["DEBUG"] = True
 
