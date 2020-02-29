@@ -27,7 +27,6 @@ def analyzedJson():
 
 def iterate(object):
     for tweets in object:
-        # now song is a dictionary
         for value in tweets.values():
             print(value)
     return analyzedJson()
