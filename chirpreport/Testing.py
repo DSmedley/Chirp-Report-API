@@ -5,6 +5,17 @@ from nltk.stem import WordNetLemmatizer
 import re
 import string
 import spacy
+from nltk.corpus import twitter_samples
+from nltk.twitter import json2csv
+
+input_file = twitter_samples.abspath("tweets.20150430-223406.json")
+
+with open(input_file) as fp:
+    json2csv(fp, 'tweets.20150430-223406.tweet.csv',
+            ['created_at', 'favorite_count', 'id', 'in_reply_to_status_id',
+            'in_reply_to_user_id', 'retweet_count', 'retweeted',
+            'text', 'truncated', 'user.id'])
+
 
 
 nlp = spacy.load("en_vectors_web_lg")
@@ -22,7 +33,7 @@ def remove_duplicates(x):
 def clean_tweets(tweet):
     tweet = re.sub(r'$\w', '', tweet)  # remove stock market tickers like $GE
     tweet = re.sub(r'^RT[\s]+', '', tweet)  # remove old style retweet text "RT"
-    tweet = re.sub(r'https?://.[\r\n]*', '', tweet)  # remove hyperlinks
+    tweet = re.sub(r'(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?', '', tweet)  # remove hyperlinks
     tweet = re.sub(r'#', '', tweet)  # remove hashtags only removing the hash # sign from the word
     tweet_tokens = tokenizer.tokenize(tweet)
 
@@ -72,4 +83,4 @@ def analyze_tweet(tweet):
         get_synonyms(clean_tokens)
 
 
-analyze_tweet(oneTweet)
+#analyze_tweet(oneTweet)
