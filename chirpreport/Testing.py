@@ -32,6 +32,8 @@ def remove_duplicates(x):
 
 def clean_tweets(tweet):
     tweet = re.sub(r'$\w', '', tweet)  # remove stock market tickers like $GE
+    tweet = re.sub(r'\@', '', tweet[1])  # remove @ symbol
+    tweet = re.sub(r'…', '', tweet[1])  # remove … from file
     tweet = re.sub(r'^RT[\s]+', '', tweet)  # remove old style retweet text "RT"
     tweet = re.sub(r'(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?', '', tweet)  # remove hyperlinks
     tweet = re.sub(r'#', '', tweet)  # remove hashtags only removing the hash # sign from the word

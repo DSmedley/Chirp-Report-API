@@ -3,15 +3,18 @@ import paralleldots
 import pandas as pd
 import re
 
+
 # Cleans the text in a array of ['id', 'text']
 def clean_tweets(tweet):
     tweet[1] = re.sub(r'$\w', '', tweet[1])  # remove stock market tickers like $GE
-    tweet[1] = re.sub(r'@\w', '', tweet[1])  # remove stock market tickers like $GE
+    tweet[1] = re.sub(r'\@', '', tweet[1])  # remove @ symbol
+    tweet[1] = re.sub(r'…', '', tweet[1])  # remove … from file
     tweet[1] = re.sub(r'^RT[\s]+', '', tweet[1])  # remove old style retweet text "RT"
     tweet[1] = re.sub(r'(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?', '',
-                   tweet[1])  # remove hyperlinks
+                      tweet[1])  # remove hyperlinks
     tweet[1] = re.sub(r'#', '', tweet[1])  # remove hashtags only removing the hash # sign from the word
     return tweet
+
 
 # Cleans the initial tweet csv and removes all the unused columns
 def create_clean_tweets():
@@ -55,8 +58,7 @@ def add_id_to_already_classified_tweets():
 
     return 1
 
-
-add_id_to_already_classified_tweets();
+# add_id_to_already_classified_tweets();
 
 # for i in range(20):
 #     for key in keys:
