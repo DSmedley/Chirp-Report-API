@@ -26,10 +26,12 @@ def create_clean_tweets():
     df.to_csv("tweets_cleaned.csv", index=False)
 
 
-def append_list_as_row(file_name, list_of_elem):
-    with open(file_name, 'a+', newline='', encoding="utf-8") as write_obj:
-        csv_writer = writer(write_obj)
-        csv_writer.writerow(list_of_elem)
+def append_list_as_row(output_file, new_row):
+    file = pd.read_csv(output_file, header=0)
+    df2 = pd.DataFrame(new_row, columns=['id', 'text'])
+
+    file = file.append(df2, ignore_index=True)
+    file.to_csv(output_file, index=False)
 
 
 def analyze(input_file, output_file):
@@ -37,14 +39,16 @@ def analyze(input_file, output_file):
     drop_index = []
     for i in range(50):
         drop_index.append(i)
+        id = df.loc[i, 'id']
         tweet = df.loc[i, 'text']
-        print(tweet)
-        res = paralleldots.emotion(tweet)
-        print(res)
-        emotion = res['emotion']
-        insert_row = [tweet, emotion['Bored'], emotion['Angry'], emotion['Sad'], emotion['Fear'], emotion['Happy'],
-                      emotion['Excited']]
-        print(insert_row)
+        #print(tweet)
+        # res = paralleldots.emotion(tweet)
+        # print(res)
+        # emotion = res['emotion']
+        # insert_row = [tweet, emotion['Bored'], emotion['Angry'], emotion['Sad'], emotion['Fear'], emotion['Happy'],
+        #               emotion['Excited']]
+        insert_row = [id, tweet]
+        #print(insert_row)
         append_list_as_row(output_file, insert_row)
     df = df.drop(drop_index)
     df.to_csv(input_file, index=False)
@@ -55,14 +59,14 @@ def remove_duplicate_tweets(tweets, category):
     return tweets
 
 
-create_clean_tweets()
+def create_classified_tweets():
+    for i in range(22):
+        for key in range(9):
+            #print(key)
+            #paralleldots.set_api_key(key)
+            # paralleldots.sentiment( text )
+            analyze('tweets_cleaned.csv', 'classified_tweets.csv')
 
 
-# add_id_to_already_classified_tweets();
-
-# for i in range(20):
-#     for key in keys:
-#         print(key)
-#         paralleldots.set_api_key(key)
-#         # paralleldots.sentiment( text )
-#         analyze('tweets_cleaned.csv', 'classified_tweets.csv')
+#create_clean_tweets()
+create_classified_tweets()
