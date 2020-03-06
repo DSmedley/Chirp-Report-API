@@ -1,4 +1,3 @@
-from csv import writer
 import paralleldots
 import pandas as pd
 import re
@@ -29,26 +28,40 @@ def create_clean_tweets():
 def append_list_as_row(output_file, new_row):
     file = pd.read_csv(output_file, header=0)
     df2 = pd.DataFrame(new_row, columns=['id', 'text'])
+    new_file = file.append(df2)
+    new_file.to_csv(output_file, index=False)
 
-    file = file.append(df2, ignore_index=True)
-    file.to_csv(output_file, index=False)
 
-
-def analyze(input_file, output_file):
+def classify_emotion(input_file, output_file):
     df = pd.read_csv(input_file, header=0)
     drop_index = []
     for i in range(50):
         drop_index.append(i)
-        id = df.loc[i, 'id']
+        tweet_id = df.loc[i, 'id']
         tweet = df.loc[i, 'text']
-        #print(tweet)
-        # res = paralleldots.emotion(tweet)
-        # print(res)
-        # emotion = res['emotion']
-        # insert_row = [tweet, emotion['Bored'], emotion['Angry'], emotion['Sad'], emotion['Fear'], emotion['Happy'],
-        #               emotion['Excited']]
-        insert_row = [id, tweet]
-        #print(insert_row)
+        res = paralleldots.emotion(tweet)
+        print(res)
+        emotion = res['emotion']
+        insert_row = [(tweet_id, tweet, emotion['Bored'], emotion['Angry'], emotion['Sad'], emotion['Fear'], emotion['Happy'], emotion['Excited'])]
+        print(insert_row)
+        append_list_as_row(output_file, insert_row)
+    df = df.drop(drop_index)
+    df.to_csv(input_file, index=False)
+
+
+# TODO: Needs to be modified for sentiment
+def classify_sentiment(input_file, output_file):
+    df = pd.read_csv(input_file, header=0)
+    drop_index = []
+    for i in range(50):
+        drop_index.append(i)
+        tweet_id = df.loc[i, 'id']
+        tweet = df.loc[i, 'text']
+        res = paralleldots.sentiment(tweet)
+        print(res)
+        emotion = res['emotion']
+        insert_row = [(tweet_id, tweet, emotion['Bored'], emotion['Angry'], emotion['Sad'], emotion['Fear'], emotion['Happy'], emotion['Excited'])]
+        print(insert_row)
         append_list_as_row(output_file, insert_row)
     df = df.drop(drop_index)
     df.to_csv(input_file, index=False)
@@ -62,10 +75,9 @@ def remove_duplicate_tweets(tweets, category):
 def create_classified_tweets():
     for i in range(22):
         for key in range(9):
-            #print(key)
-            #paralleldots.set_api_key(key)
-            # paralleldots.sentiment( text )
-            analyze('tweets_cleaned.csv', 'classified_tweets.csv')
+            print(key)
+            paralleldots.set_api_key(key)
+            classify_emotion('tweets_cleaned.csv', 'classified_tweets.csv')
 
 
 #create_clean_tweets()
