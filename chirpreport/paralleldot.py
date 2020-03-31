@@ -1,3 +1,5 @@
+import operator
+
 import paralleldots
 import pandas as pd
 import re
@@ -42,7 +44,8 @@ def classify_emotion(input_file, output_file):
         res = paralleldots.emotion(tweet)
         print(res)
         emotion = res['emotion']
-        insert_row = [(tweet_id, tweet, emotion['Bored'], emotion['Angry'], emotion['Sad'], emotion['Fear'], emotion['Happy'], emotion['Excited'])]
+        insert_row = [(tweet_id, tweet, emotion['Bored'], emotion['Angry'], emotion['Sad'], emotion['Fear'],
+                       emotion['Happy'], emotion['Excited'])]
         print(insert_row)
         append_list_as_row(output_file, insert_row, ['id', 'text', 'Bored', 'Angry', 'Sad', 'Fear', 'Happy', 'Excited'])
     df = df.drop(drop_index)
@@ -59,11 +62,34 @@ def classify_sentiment(input_file, output_file):
         res = paralleldots.sentiment(tweet)
         print(res)
         sentiment = res['sentiment']
-        insert_row = [(tweet_id, tweet, df.loc[i, 'Bored'], df.loc[i, 'Angry'], df.loc[i, 'Sad'], df.loc[i, 'Fear'], df.loc[i, 'Happy'], df.loc[i, 'Excited'], sentiment['negative'], sentiment['neutral'], sentiment['positive'])]
+        insert_row = [(tweet_id, tweet, df.loc[i, 'Bored'], df.loc[i, 'Angry'], df.loc[i, 'Sad'], df.loc[i, 'Fear'],
+                       df.loc[i, 'Happy'], df.loc[i, 'Excited'], sentiment['negative'], sentiment['neutral'],
+                       sentiment['positive'])]
         print(insert_row)
-        append_list_as_row(output_file, insert_row, ['id', 'text', 'Bored', 'Angry', 'Sad', 'Fear', 'Happy', 'Excited', 'negative', 'neutral', 'positive'])
+        append_list_as_row(output_file, insert_row,
+                           ['id', 'text', 'Bored', 'Angry', 'Sad', 'Fear', 'Happy', 'Excited', 'negative', 'neutral',
+                            'positive'])
     df = df.drop(drop_index)
     df.to_csv(input_file, index=False)
+
+
+def single_sentiment_and_emotion(input_file, output_file):
+    df = pd.read_csv(input_file, header=0)
+    file = pd.read_csv(output_file, header=0)
+    for i in range(len(df)):
+        tweet_id = df.loc[i, 'id']
+        tweet = df.loc[i, 'text']
+        Bored, Angry, Sad, Fear, Happy, Excited = df.loc[i, 'Bored'], df.loc[i, 'Angry'], df.loc[i, 'Sad'], df.loc[i, 'Fear'], df.loc[i, 'Happy'], df.loc[i, 'Excited']
+        negative, neutral, positive = df.loc[i, 'negative'], df.loc[i, 'neutral'], df.loc[i, 'positive']
+        emotions = {'Bored': Bored, 'Angry': Angry, 'Sad': Sad, 'Fear': Fear, 'Happy': Happy, 'Excited': Excited}
+        sentiments = {'Negative': negative, 'Neutral': neutral, 'Positive': positive}
+        emotion = max(emotions.items(), key=operator.itemgetter(1))[0]
+        sentiment = max(sentiments.items(), key=operator.itemgetter(1))[0]
+        insert_row = [(tweet_id, emotion, sentiment, tweet)]
+        print(insert_row)
+        df2 = pd.DataFrame(insert_row, columns=['id', 'emotion', 'sentiment', 'text'])
+        file = file.append(df2)
+    file.to_csv(output_file, index=False)
 
 
 def remove_duplicate_tweets(tweets, category):
@@ -73,13 +99,14 @@ def remove_duplicate_tweets(tweets, category):
 
 def create_classified_tweets():
 
-    for i in range(19):
-        for key in keys:
-            print(key)
-            paralleldots.set_api_key(key)
-            #classify_emotion('tweets_cleaned.csv', 'classified_tweets.csv')
-            classify_sentiment('classified_tweets.csv', 'final_classified_tweets.csv')
+    # for i in range(19):
+    #     for key in keys:
+    #         print(key)
+    #         paralleldots.set_api_key(key)
+    #         # classify_emotion('tweets_cleaned.csv', 'classified_tweets.csv')
+    #         # classify_sentiment('classified_tweets.csv', 'final_classified_tweets.csv')
+    single_sentiment_and_emotion('final_classified_tweets.csv', 'single_classification_tweets.csv')
 
 
-#create_clean_tweets()
+# create_clean_tweets()
 create_classified_tweets()
