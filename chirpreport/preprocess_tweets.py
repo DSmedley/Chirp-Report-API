@@ -14,12 +14,10 @@ def get_stop_words():
 
 
 class PreprocessTweets:
-    def __init__(self, tweets, length):
-        self.tweets = tweets
+    def __init__(self, length):
         self.sequence_length = length
 
-    def process(self):
-        tweets = self.tweets
+    def process(self, tweets):
         sequence_length = self.sequence_length
         stop_words = get_stop_words()
 
@@ -37,8 +35,11 @@ class PreprocessTweets:
             filtered_sentence = [w for w in newlist if not w in stop_words]
             word_sequences.append(filtered_sentence)
 
-        # Tokenizing words to word indices
+        return word_sequences
 
+    def tokenize(self, word_sequences):
+        sequence_length = self.sequence_length
+        # Tokenizing words to word indices
         print(f"Word Sequences: {word_sequences}")
         tokenizer = Tokenizer()
         tokenizer.fit_on_texts(word_sequences)
@@ -47,10 +48,8 @@ class PreprocessTweets:
         word_index = tokenizer.word_index
         print("Tokenized to Word indices as ")
         print(np.array(word_indices).shape)
-
         # padding word_indices
-
         x_data = pad_sequences(word_indices, maxlen=sequence_length)
         print("After padding data")
         print(x_data.shape)
-        return x_data, word_index
+        return x_data, word_index, tokenizer

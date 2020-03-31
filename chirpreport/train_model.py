@@ -1,5 +1,6 @@
 import datetime
 import os
+import pickle
 import time
 
 import numpy as np
@@ -10,6 +11,7 @@ from keras.layers import Embedding, Flatten, Conv1D, MaxPooling1D
 from keras.layers import LSTM
 from keras.models import Sequential
 from keras.utils import np_utils
+from keras_preprocessing.sequence import pad_sequences
 from matplotlib import pyplot
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
@@ -27,8 +29,12 @@ print(tweet_emotion.shape)
 
 # ----------------------------Preprocessing Text Data---------------------------------------
 
-preprocess = PreprocessTweets(tweet_text, MAX_SEQUENCE_LENGTH)
-x_data, word_index = preprocess.process()
+preprocess = PreprocessTweets(MAX_SEQUENCE_LENGTH)
+sequence = preprocess.process(tweet_text)
+x_data, word_index, tokenizer = preprocess.tokenize(sequence)
+
+with open('models/tokenizer.pickle', 'wb') as handle:
+    pickle.dump(tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 # ----------------------------Building Embedding Layer---------------------------------------
 
@@ -103,7 +109,7 @@ x_train2, y_train2 = x_train[batch_size:], y_train[batch_size:]
 
 st = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
 # define the checkpoint
-filepath = "200d-twitter-model_weights-improvement-{epoch:02d}-{val_accuracy:.6f}.hdf5"
+filepath = "models/200d-twitter-model_weights-improvement-{epoch:02d}-{val_accuracy:.6f}.hdf5"
 checkpoint = ModelCheckpoint(filepath, monitor='val_accuracy', verbose=1, save_best_only=True, mode='max')
 callbacks_list = [checkpoint]
 
@@ -118,3 +124,25 @@ pyplot.plot(history.history['val_accuracy'], label='Validation Accuracy')
 
 pyplot.legend()
 pyplot.show()
+
+
+tweets = ["@MojoInTheMorn these Kevin whatever ads are probably the worst thing to happen to the podcasts. I have to listen to the same ad every 5-10 minutes and the guys voice is annoying"]
+
+sequence = preprocess.process(tweets)
+instance = tokenizer.texts_to_sequences(sequence)
+
+flat_list = []
+for sublist in instance:
+    for item in sublist:
+        flat_list.append(item)
+
+flat_list = [flat_list]
+
+instance = pad_sequences(flat_list, padding='post', maxlen=20)
+print(f"Instance {instance}")
+
+predicted_classes = model.predict(instance)
+predicted_class = model.predict_classes(instance)
+
+print(f"Predicted Classes: {predicted_classes}")
+print(f"Predicted Class: {predicted_class}")
