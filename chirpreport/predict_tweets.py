@@ -10,7 +10,7 @@ print(model.summary())
 
 tweets = ["@MojoInTheMorn these Kevin whatever ads are probably the worst thing to happen to the podcasts. I have to listen to the same ad every 5-10 minutes and the guys voice is annoying"]
 
-dataFrame = pd.read_csv('text_emotion_twitter.csv', encoding='utf-8')
+dataFrame = pd.read_csv('data/text_emotion_twitter.csv', encoding='utf-8')
 
 tweet_text = dataFrame.values[:, 3]
 

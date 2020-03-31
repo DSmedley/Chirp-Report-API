@@ -17,7 +17,7 @@ from chirpreport.preprocess_tweets import PreprocessTweets
 
 MAX_SEQUENCE_LENGTH = 20
 EMBEDDING_DIM = 200
-dataFrame = pd.read_csv('single_classification_tweets.csv', encoding='utf-8')
+dataFrame = pd.read_csv('data/single_classification_tweets.csv', encoding='utf-8')
 
 tweet_text = dataFrame.values[:, 3]
 tweet_emotion = dataFrame.values[:, 2]

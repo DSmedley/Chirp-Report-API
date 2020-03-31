@@ -19,7 +19,7 @@ def clean_tweets(tweet):
 
 # Cleans the initial tweet csv and removes all the unused columns
 def create_clean_tweets():
-    tweets = pd.read_csv("tweets.20150430-223406.tweet.csv", usecols=['id', 'text']).values
+    tweets = pd.read_csv("data/tweets.20150430-223406.tweet.csv", usecols=['id', 'text']).values
     cleaned = [clean_tweets(tweet) for tweet in tweets]
     df = pd.DataFrame(cleaned, columns=['id', 'text'])
     df = remove_duplicate_tweets(df, 'id')
@@ -105,7 +105,7 @@ def create_classified_tweets():
     #         paralleldots.set_api_key(key)
     #         # classify_emotion('tweets_cleaned.csv', 'classified_tweets.csv')
     #         # classify_sentiment('classified_tweets.csv', 'final_classified_tweets.csv')
-    single_sentiment_and_emotion('final_classified_tweets.csv', 'single_classification_tweets.csv')
+    single_sentiment_and_emotion('data/final_classified_tweets.csv', 'data/single_classification_tweets.csv')
 
 
 # create_clean_tweets()

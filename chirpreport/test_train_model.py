@@ -26,7 +26,7 @@ EMBEDDING_DIM = 50
 stop_words = set(stopwords.words('english'))
 new_stop_words = set(stop_words)
 
-dataFrame = pd.read_csv('text_emotion_twitter.csv', encoding='utf-8')
+dataFrame = pd.read_csv('data/text_emotion_twitter.csv', encoding='utf-8')
 
 x = dataFrame.values[:, 3]
 y = dataFrame.values[:, 1]
