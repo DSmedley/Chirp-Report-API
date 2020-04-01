@@ -50,4 +50,4 @@ def analyze_sentiment(sequence):
 
 
 def analyze_emotion(tweet):
-    return ""
+    return "somethin"
