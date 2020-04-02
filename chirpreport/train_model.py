@@ -19,13 +19,18 @@ from chirpreport.preprocess_tweets import PreprocessTweets
 
 MAX_SEQUENCE_LENGTH = 20
 EMBEDDING_DIM = 200
-dataFrame = pd.read_csv('data/single_classification_tweets.csv', encoding='utf-8')
+TOKENIZER_NAME = f"{EMBEDDING_DIM}d-{MAX_SEQUENCE_LENGTH}l-tokenizer"
+MODEL_NAME = f"{EMBEDDING_DIM}d-{MAX_SEQUENCE_LENGTH}l-emotions"
 
+dataFrame = pd.read_csv('data/tweets_classified.csv', encoding='utf-8')
+
+tweet_emotions = dataFrame.values[:, 1]
+tweet_sentiments = dataFrame.values[:, 2]
 tweet_text = dataFrame.values[:, 3]
-tweet_emotion = dataFrame.values[:, 2]
+tweet_classification = tweet_emotions
 
 print(tweet_text.shape)
-print(tweet_emotion.shape)
+print(tweet_classification.shape)
 
 # ----------------------------Preprocessing Text Data---------------------------------------
 
@@ -33,7 +38,7 @@ preprocess = PreprocessTweets(MAX_SEQUENCE_LENGTH)
 sequence = preprocess.process(tweet_text)
 x_data, word_index, tokenizer = preprocess.tokenize(sequence)
 
-with open('models/tokenizer.pickle', 'wb') as handle:
+with open(f'models/{TOKENIZER_NAME}.pickle', 'wb') as handle:
     pickle.dump(tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 # ----------------------------Building Embedding Layer---------------------------------------
@@ -69,7 +74,7 @@ embedding_layer = Embedding(len(word_index) + 1, EMBEDDING_DIM, weights=[embeddi
 
 
 label_encoder = LabelEncoder()
-integer_encoded = label_encoder.fit_transform(tweet_emotion)
+integer_encoded = label_encoder.fit_transform(tweet_classification)
 le_name_mapping = dict(zip(label_encoder.transform(label_encoder.classes_), label_encoder.classes_))
 print("Label Encoding Classes as ")
 print(le_name_mapping)
@@ -98,10 +103,6 @@ print("y_data shape : ", y_data.shape)
 print("spliting data into training, testing set")
 x_train, x_test, y_train, y_test = train_test_split(x_data, y_data)
 
-print(f"x_test: {x_data[0]}")
-print(f"x_test: {x_test[0]}")
-print(f"y_test: {y_test[0]}")
-
 batch_size = 64
 num_epochs = 100
 x_valid, y_valid = x_train[:batch_size], y_train[:batch_size]
@@ -109,7 +110,7 @@ x_train2, y_train2 = x_train[batch_size:], y_train[batch_size:]
 
 st = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
 # define the checkpoint
-filepath = "models/200d-twitter-model_weights-improvement-{epoch:02d}-{val_accuracy:.6f}.hdf5"
+filepath = "models/"+MODEL_NAME+"-{epoch:02d}-{val_accuracy:.6f}.hdf5"
 checkpoint = ModelCheckpoint(filepath, monitor='val_accuracy', verbose=1, save_best_only=True, mode='max')
 callbacks_list = [checkpoint]
 
