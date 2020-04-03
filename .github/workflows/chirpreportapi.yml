@@ -14,9 +14,10 @@ jobs:
         python-version: 3.7
     - name: Install dependencies
       run: |
-        python3 -m venv venv
-        venv/bin/activate
-        pip3 install --no-cache-dir -r requirements.txt
+        python -m venv venv
+        source venv/bin/activate
+        pip install --upgrade pip
+        pip install --no-cache-dir -r requirements.txt
 #    - name: Lint with flake8
 #      run: |
 #        pip install flake8
