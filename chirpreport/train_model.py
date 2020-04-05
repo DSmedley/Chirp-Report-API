@@ -12,11 +12,10 @@ from keras.models import Sequential
 from keras.utils import np_utils
 from keras_preprocessing.sequence import pad_sequences
 from keras_preprocessing.text import Tokenizer
-from matplotlib import pyplot
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
-
 from chirpreport.text_preprocessor import process
+import plotly.graph_objects as go
 
 MAX_SEQUENCE_LENGTH = 20
 EMBEDDING_DIM = 200
@@ -85,7 +84,7 @@ def encode_labels(classifications):
     return y_data
 
 
-def build_model(embedding_layer, x_data, y_data, model_name):
+def build_model(embedding_layer, x_data, y_data, model_name, title):
     model = Sequential()
     model.add(embedding_layer)
     model.add(Conv1D(30, 1, activation="relu"))
@@ -97,36 +96,37 @@ def build_model(embedding_layer, x_data, y_data, model_name):
     model.add(Dense(y_data.shape[1], activation="softmax"))
     model.compile(loss="categorical_crossentropy", optimizer="sgd", metrics=["accuracy"])
     print(model.summary())
-    train_model(model, x_data, y_data, model_name)
+    train_model(model, x_data, y_data, model_name, title)
 
 
-def train_model(model, x_data, y_data, model_name):
+def train_model(model, x_data, y_data, model_name, title):
     print("Finished Preprocessing data ...")
     print("x_data shape : ", x_data.shape)
     print("y_data shape : ", y_data.shape)
     # spliting data into training, testing set
     print("spliting data into training, testing set")
     x_train, x_test, y_train, y_test = train_test_split(x_data, y_data)
-    batch_size = 64
-    num_epochs = 100
-    x_valid, y_valid = x_train[:batch_size], y_train[:batch_size]
-    x_train2, y_train2 = x_train[batch_size:], y_train[batch_size:]
+    batch = 64
+    epochs = 100
+    x_valid, y_valid = x_train[:batch], y_train[:batch]
+    x_train2, y_train2 = x_train[batch:], y_train[batch:]
     filepath = "models/" + model_name + "-{epoch:02d}-{val_accuracy:.6f}.hdf5"
     checkpoint = ModelCheckpoint(filepath, monitor='val_accuracy', verbose=1, save_best_only=True, mode='max')
     callbacks_list = [checkpoint]
-    history = model.fit(x_train2, y_train2, validation_data=(x_valid, y_valid), batch_size=batch_size,
-                        epochs=num_epochs, callbacks=callbacks_list)
+    history = model.fit(x_train2, y_train2, validation_data=(x_valid, y_valid), batch_size=batch,
+                        epochs=epochs, callbacks=callbacks_list)
     scores = model.evaluate(x_test, y_test, verbose=0)
-    graph_results(history, scores)
+    graph_results(history, scores, title)
 
 
-def graph_results(history, scores):
-    print('Test accuracy:', scores[1])
-    print(history.history['accuracy'])
-    pyplot.plot(history.history['accuracy'], label='Training Accuracy')
-    pyplot.plot(history.history['val_accuracy'], label='Validation Accuracy')
-    pyplot.legend()
-    pyplot.show()
+def graph_results(history, scores, title):
+    x = list(range(1, len(history.history['accuracy']) + 1))
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=x, y=history.history['accuracy'], mode='lines', name='Training Accuracy'))
+    fig.add_trace(go.Scatter(x=x, y=history.history['val_accuracy'], mode='lines+markers', name='Validation Accuracy'))
+    fig.update_layout(title=f'Trained {title} Model With Final Test Accuracy of {(scores[1] * 100):.{2}f}%',
+                      xaxis_title='Iteration', yaxis_title='Accuracy')
+    fig.show()
 
 
 def create_prediction_model():
@@ -143,11 +143,11 @@ def create_prediction_model():
 
     # Build Sentiment Model
     sentiment_classifications = encode_labels(tweet_sentiments)
-    build_model(layer, tweets, sentiment_classifications, SENTIMENT_MODEL_NAME)
+    build_model(layer, tweets, sentiment_classifications, SENTIMENT_MODEL_NAME, 'Sentiment')
 
     # Build Emotions Model
     emotion_classifications = encode_labels(tweet_emotions)
-    build_model(layer, tweets, emotion_classifications, EMOTIONS_MODEL_NAME)
+    build_model(layer, tweets, emotion_classifications, EMOTIONS_MODEL_NAME, 'Emotion')
 
 
 create_prediction_model()
