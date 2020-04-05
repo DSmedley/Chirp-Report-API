@@ -12,6 +12,7 @@ def get_stop_words():
 
 
 def process(tweet):
+    print(f"Tweet: {tweet}")
     stop_words = get_stop_words()
     base_filters = '\n\t!"#$%&()*+,-–./:;<=>?[\]^_`{|}~ 0123456789'
 
@@ -21,4 +22,7 @@ def process(tweet):
     tweet = tweet.replace('\'', '')
     new_list = [x for x in text_to_word_sequence(tweet, filters=base_filters, lower=True) if
                 not x.startswith("@")]
-    return [w for w in new_list if not w in stop_words]
+    print(f"Processed Tweet: {new_list}")
+    final = [w for w in new_list if not w in stop_words]
+    print(f"Removed stop words: {final}")
+    return final

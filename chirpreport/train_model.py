@@ -10,16 +10,45 @@ from keras.layers import Embedding, Flatten, Conv1D, MaxPooling1D
 from keras.layers import LSTM
 from keras.models import Sequential
 from keras.utils import np_utils
+from keras_preprocessing.sequence import pad_sequences
+from keras_preprocessing.text import Tokenizer
 from matplotlib import pyplot
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
-from chirpreport.preprocess_tweets import PreprocessTweets
+
+from chirpreport.text_preprocessor import process
 
 MAX_SEQUENCE_LENGTH = 20
 EMBEDDING_DIM = 200
 DATE = datetime.date.today()
 TOKENIZER_NAME = f"{EMBEDDING_DIM}d-{MAX_SEQUENCE_LENGTH}l-tokenizer-{DATE}"
-MODEL_NAME = f"{EMBEDDING_DIM}d-{MAX_SEQUENCE_LENGTH}l-emotions-{DATE}"
+SENTIMENT_MODEL_NAME = f"{EMBEDDING_DIM}d-{MAX_SEQUENCE_LENGTH}l-sentiment-{DATE}"
+EMOTIONS_MODEL_NAME = f"{EMBEDDING_DIM}d-{MAX_SEQUENCE_LENGTH}l-emotions-{DATE}"
+
+
+def process_tweets(tweet_text):
+    word_sequences = []
+    for tweet in tweet_text:
+        sequence = process(tweet)
+        word_sequences.append(sequence)
+    return word_sequences
+
+
+def tokenize(word_sequences):
+    # Tokenizing words to word indices
+    tokenizer = Tokenizer()
+    tokenizer.fit_on_texts(word_sequences)
+    word_indices = tokenizer.texts_to_sequences(word_sequences)
+    word_index = tokenizer.word_index
+    print("Tokenized to Word indices as ")
+    print(np.array(word_indices).shape)
+    # padding word_indices
+    x_data = pad_sequences(word_indices, maxlen=MAX_SEQUENCE_LENGTH)
+    print("After padding data")
+    print(x_data.shape)
+    with open(f'models/{TOKENIZER_NAME}.pickle', 'wb') as handle:
+        pickle.dump(tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    return x_data, word_index
 
 
 def build_embedding_layer(word_index):
@@ -40,7 +69,8 @@ def build_embedding_layer(word_index):
             # words not found in embedding index will be all-zeros.
             embedding_matrix[i] = embedding_vector
     print("Embedding Matrix Generated : ", embedding_matrix.shape)
-    return Embedding(len(word_index) + 1, EMBEDDING_DIM, weights=[embedding_matrix], input_length=MAX_SEQUENCE_LENGTH, trainable=False)
+    return Embedding(len(word_index) + 1, EMBEDDING_DIM, weights=[embedding_matrix], input_length=MAX_SEQUENCE_LENGTH,
+                     trainable=False)
 
 
 def encode_labels(classifications):
@@ -55,7 +85,7 @@ def encode_labels(classifications):
     return y_data
 
 
-def build_model(embedding_layer, x_data, y_data):
+def build_model(embedding_layer, x_data, y_data, model_name):
     model = Sequential()
     model.add(embedding_layer)
     model.add(Conv1D(30, 1, activation="relu"))
@@ -67,10 +97,10 @@ def build_model(embedding_layer, x_data, y_data):
     model.add(Dense(y_data.shape[1], activation="softmax"))
     model.compile(loss="categorical_crossentropy", optimizer="sgd", metrics=["accuracy"])
     print(model.summary())
-    train_model(model, x_data, y_data)
+    train_model(model, x_data, y_data, model_name)
 
 
-def train_model(model, x_data, y_data):
+def train_model(model, x_data, y_data, model_name):
     print("Finished Preprocessing data ...")
     print("x_data shape : ", x_data.shape)
     print("y_data shape : ", y_data.shape)
@@ -81,18 +111,18 @@ def train_model(model, x_data, y_data):
     num_epochs = 100
     x_valid, y_valid = x_train[:batch_size], y_train[:batch_size]
     x_train2, y_train2 = x_train[batch_size:], y_train[batch_size:]
-    filepath = "models/" + MODEL_NAME + "-{epoch:02d}-{val_accuracy:.6f}.hdf5"
+    filepath = "models/" + model_name + "-{epoch:02d}-{val_accuracy:.6f}.hdf5"
     checkpoint = ModelCheckpoint(filepath, monitor='val_accuracy', verbose=1, save_best_only=True, mode='max')
     callbacks_list = [checkpoint]
     history = model.fit(x_train2, y_train2, validation_data=(x_valid, y_valid), batch_size=batch_size,
-                        epochs=num_epochs,
-                        callbacks=callbacks_list)
+                        epochs=num_epochs, callbacks=callbacks_list)
     scores = model.evaluate(x_test, y_test, verbose=0)
     graph_results(history, scores)
 
 
 def graph_results(history, scores):
     print('Test accuracy:', scores[1])
+    print(history.history['accuracy'])
     pyplot.plot(history.history['accuracy'], label='Training Accuracy')
     pyplot.plot(history.history['val_accuracy'], label='Validation Accuracy')
     pyplot.legend()
@@ -100,25 +130,24 @@ def graph_results(history, scores):
 
 
 def create_prediction_model():
+    # Get training data and split text from classifications
     dataFrame = pd.read_csv('data/tweets_classified.csv', encoding='utf-8')
-
     tweet_emotions = dataFrame.values[:, 1]
     tweet_sentiments = dataFrame.values[:, 2]
     tweet_text = dataFrame.values[:, 3]
-    tweet_classification = tweet_emotions
 
-    print(tweet_text.shape)
-    print(tweet_classification.shape)
-
-    preprocess = PreprocessTweets(MAX_SEQUENCE_LENGTH)
-    sequence = preprocess.process(tweet_text)
-    x_data, word_index, tokenizer = preprocess.tokenize(sequence)
-
-    with open(f'models/{TOKENIZER_NAME}.pickle', 'wb') as handle:
-        pickle.dump(tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    # Preprocess tweets and creating the vocabulary for both models
+    word_sequences = process_tweets(tweet_text)
+    tweets, word_index = tokenize(word_sequences)
     layer = build_embedding_layer(word_index)
-    y_data = encode_labels(tweet_classification)
-    build_model(layer, x_data, y_data)
+
+    # Build Sentiment Model
+    sentiment_classifications = encode_labels(tweet_sentiments)
+    build_model(layer, tweets, sentiment_classifications, SENTIMENT_MODEL_NAME)
+
+    # Build Emotions Model
+    emotion_classifications = encode_labels(tweet_emotions)
+    build_model(layer, tweets, emotion_classifications, EMOTIONS_MODEL_NAME)
 
 
 create_prediction_model()
