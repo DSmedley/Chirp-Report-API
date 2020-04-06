@@ -84,7 +84,7 @@ def encode_labels(classifications):
     return y_data
 
 
-def build_model(embedding_layer, x_data, y_data, model_name, title):
+def build_model(embedding_layer, x_data, y_data, model_name, title, epoch):
     model = Sequential()
     model.add(embedding_layer)
     model.add(Conv1D(30, 1, activation="relu"))
@@ -96,10 +96,10 @@ def build_model(embedding_layer, x_data, y_data, model_name, title):
     model.add(Dense(y_data.shape[1], activation="softmax"))
     model.compile(loss="categorical_crossentropy", optimizer="sgd", metrics=["accuracy"])
     print(model.summary())
-    train_model(model, x_data, y_data, model_name, title)
+    train_model(model, x_data, y_data, model_name, title, epoch)
 
 
-def train_model(model, x_data, y_data, model_name, title):
+def train_model(model, x_data, y_data, model_name, title, epoch):
     print("Finished Preprocessing data ...")
     print("x_data shape : ", x_data.shape)
     print("y_data shape : ", y_data.shape)
@@ -107,14 +107,13 @@ def train_model(model, x_data, y_data, model_name, title):
     print("spliting data into training, testing set")
     x_train, x_test, y_train, y_test = train_test_split(x_data, y_data)
     batch = 64
-    epochs = 100
     x_valid, y_valid = x_train[:batch], y_train[:batch]
     x_train2, y_train2 = x_train[batch:], y_train[batch:]
     filepath = "models/" + model_name + "-{epoch:02d}-{val_accuracy:.6f}.hdf5"
     checkpoint = ModelCheckpoint(filepath, monitor='val_accuracy', verbose=1, save_best_only=True, mode='max')
     callbacks_list = [checkpoint]
     history = model.fit(x_train2, y_train2, validation_data=(x_valid, y_valid), batch_size=batch,
-                        epochs=epochs, callbacks=callbacks_list)
+                        epochs=epoch, callbacks=callbacks_list)
     scores = model.evaluate(x_test, y_test, verbose=0)
     graph_results(history, scores, title)
 
@@ -143,11 +142,11 @@ def create_prediction_model():
 
     # Build Sentiment Model
     sentiment_classifications = encode_labels(tweet_sentiments)
-    build_model(layer, tweets, sentiment_classifications, SENTIMENT_MODEL_NAME, 'Sentiment')
+    build_model(layer, tweets, sentiment_classifications, SENTIMENT_MODEL_NAME, 'Sentiment', 125)
 
     # Build Emotions Model
     emotion_classifications = encode_labels(tweet_emotions)
-    build_model(layer, tweets, emotion_classifications, EMOTIONS_MODEL_NAME, 'Emotion')
+    build_model(layer, tweets, emotion_classifications, EMOTIONS_MODEL_NAME, 'Emotion', 75)
 
 
 create_prediction_model()
