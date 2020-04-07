@@ -5,7 +5,7 @@ import pickle
 import numpy as np
 import pandas as pd
 from keras.callbacks import ModelCheckpoint
-from keras.layers import Dense
+from keras.layers import Dense, SpatialDropout1D
 from keras.layers import Embedding, Flatten, Conv1D, MaxPooling1D
 from keras.layers import LSTM
 from keras.models import Sequential
@@ -88,6 +88,7 @@ def build_model(embedding_layer, x_data, y_data, model_name, title, epoch):
     model = Sequential()
     model.add(embedding_layer)
     model.add(Conv1D(30, 1, activation="relu"))
+    model.add(SpatialDropout1D(0.4))
     model.add(MaxPooling1D(4))
     model.add(LSTM(100, return_sequences=True))
     model.add(Flatten())
@@ -120,12 +121,19 @@ def train_model(model, x_data, y_data, model_name, title, epoch):
 
 def graph_results(history, scores, title):
     x = list(range(1, len(history.history['accuracy']) + 1))
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=x, y=history.history['accuracy'], mode='lines', name='Training Accuracy'))
-    fig.add_trace(go.Scatter(x=x, y=history.history['val_accuracy'], mode='lines+markers', name='Validation Accuracy'))
-    fig.update_layout(title=f'Trained {title} Model With Final Test Accuracy of {(scores[1] * 100):.{2}f}%',
+    accuracy = go.Figure()
+    accuracy.add_trace(go.Scatter(x=x, y=history.history['accuracy'], mode='lines', name='Training Accuracy'))
+    accuracy.add_trace(go.Scatter(x=x, y=history.history['val_accuracy'], mode='lines', name='Validation Accuracy'))
+    accuracy.update_layout(title=f'{title} Model Accuracy With Final Test Accuracy of {(scores[1] * 100):.{2}f}%',
                       xaxis_title='Iteration', yaxis_title='Accuracy')
-    fig.show()
+    accuracy.show()
+
+    loss = go.Figure()
+    loss.add_trace(go.Scatter(x=x, y=history.history['loss'], mode='lines', name='Training Loss'))
+    loss.add_trace(go.Scatter(x=x, y=history.history['val_loss'], mode='lines', name='Validation Loss'))
+    loss.update_layout(title=f'{title} Model Loss With Final Test Accuracy of {(scores[1] * 100):.{2}f}%',
+                      xaxis_title='Iteration', yaxis_title='Accuracy')
+    loss.show()
 
 
 def create_prediction_model():
@@ -142,11 +150,11 @@ def create_prediction_model():
 
     # Build Sentiment Model
     sentiment_classifications = encode_labels(tweet_sentiments)
-    build_model(layer, tweets, sentiment_classifications, SENTIMENT_MODEL_NAME, 'Sentiment', 125)
+    build_model(layer, tweets, sentiment_classifications, SENTIMENT_MODEL_NAME, 'Sentiment', 200)
 
     # Build Emotions Model
     emotion_classifications = encode_labels(tweet_emotions)
-    build_model(layer, tweets, emotion_classifications, EMOTIONS_MODEL_NAME, 'Emotion', 75)
+    build_model(layer, tweets, emotion_classifications, EMOTIONS_MODEL_NAME, 'Emotion', 250)
 
 
 create_prediction_model()

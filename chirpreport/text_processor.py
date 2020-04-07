@@ -2,17 +2,16 @@ import operator
 
 import numpy as np
 import pickle
-from keras.models import load_model
 from keras_preprocessing.sequence import pad_sequences
+from tensorflow_core.python.keras.models import load_model
 
 from chirpreport.emotions import Emotions
 from chirpreport.sentiments import Sentiments
 from chirpreport.text_preprocessor import process
 
-S_MODEL = '200d-twitter-model_weights-improvement-74-0.718750.hdf5'
-E_MODEL = '200d-20l-emotions-92-0.578125.hdf5'
-S_T_MODEL = 'tokenizer.pickle'
-E_T_MODEL = 'tokenizer.pickle'
+S_MODEL = '200d-20l-sentiment-2020-04-06-6--145-0.796875.hdf5'
+E_MODEL = '200d-20l-emotions-2020-04-06-5--193-0.546875.hdf5'
+T_MODEL = '200d-20l-tokenizer-2020-04-06.pickle'
 MAX_SEQUENCE_LENGTH = 20
 
 
@@ -26,8 +25,7 @@ sentiment_model = load_model(f'models/{S_MODEL}')
 sentiment_model.compile(loss="categorical_crossentropy", optimizer="sgd", metrics=["accuracy"])
 emotion_model = load_model(f'models/{E_MODEL}')
 emotion_model.compile(loss="categorical_crossentropy", optimizer="sgd", metrics=["accuracy"])
-sentiment_tokenizer = load_tokenizer(S_T_MODEL)
-emotion_tokenizer = load_tokenizer(E_T_MODEL)
+loaded_tokenizer = load_tokenizer(T_MODEL)
 
 
 def process_tweet(tweet):
@@ -44,8 +42,8 @@ def get_predictions(tweet):
     sentiments = {}
     emotions = {}
     tweet_sequence = process(tweet)
-    sentiments_values = analyze_text(tweet_sequence, sentiment_tokenizer, sentiment_model)
-    emotions_values = analyze_text(tweet_sequence, emotion_tokenizer, emotion_model)
+    sentiments_values = analyze_text(tweet_sequence, loaded_tokenizer, sentiment_model)
+    emotions_values = analyze_text(tweet_sequence, loaded_tokenizer, emotion_model)
     for i in sentiments_values:
         sentiments[Sentiments(np.argwhere(sentiments_values == i)).name] = i
     for i in emotions_values:
