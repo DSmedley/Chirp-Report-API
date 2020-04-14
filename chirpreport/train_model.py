@@ -19,7 +19,7 @@ import plotly.graph_objects as go
 
 MAX_SEQUENCE_LENGTH = 20
 EMBEDDING_DIM = 200
-DATE = datetime.date.today()
+DATE = datetime.datetime.now().strftime("%m-%d-%H.%M")
 TOKENIZER_NAME = f"{EMBEDDING_DIM}d-{MAX_SEQUENCE_LENGTH}l-tokenizer-{DATE}"
 SENTIMENT_MODEL_NAME = f"{EMBEDDING_DIM}d-{MAX_SEQUENCE_LENGTH}l-sentiment-{DATE}"
 EMOTIONS_MODEL_NAME = f"{EMBEDDING_DIM}d-{MAX_SEQUENCE_LENGTH}l-emotions-{DATE}"
@@ -125,14 +125,14 @@ def graph_results(history, scores, title):
     accuracy.add_trace(go.Scatter(x=x, y=history.history['accuracy'], mode='lines', name='Training Accuracy'))
     accuracy.add_trace(go.Scatter(x=x, y=history.history['val_accuracy'], mode='lines', name='Validation Accuracy'))
     accuracy.update_layout(title=f'{title} Model Accuracy With Final Test Accuracy of {(scores[1] * 100):.{2}f}%',
-                      xaxis_title='Iteration', yaxis_title='Accuracy')
+                           xaxis_title='Iteration', yaxis_title='Accuracy')
     accuracy.show()
 
     loss = go.Figure()
     loss.add_trace(go.Scatter(x=x, y=history.history['loss'], mode='lines', name='Training Loss'))
     loss.add_trace(go.Scatter(x=x, y=history.history['val_loss'], mode='lines', name='Validation Loss'))
     loss.update_layout(title=f'{title} Model Loss With Final Test Accuracy of {(scores[1] * 100):.{2}f}%',
-                      xaxis_title='Iteration', yaxis_title='Accuracy')
+                       xaxis_title='Iteration', yaxis_title='Loss')
     loss.show()
 
 
